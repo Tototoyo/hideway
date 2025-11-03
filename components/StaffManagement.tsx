@@ -16,18 +16,33 @@ interface StaffFormProps {
 const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, onClose, initialData }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
-    // Fix: Set a default role from the Role enum and ensure it's a string for the select input.
     role: initialData?.role || Role.Staff,
-    // Fix: Convert salary to a string for the input field to maintain a consistent type.
     salary: initialData?.salary?.toString() || '',
     contact: initialData?.contact || '',
     employeeId: initialData?.employeeId || '',
+    phone: initialData?.phone || '',
+    thaiId: initialData?.thaiId || '',
+    address: initialData?.address || '',
+    emergencyContact: initialData?.emergencyContact || '',
+    birthday: initialData?.birthday || '',
   });
+  const [idPhoto, setIdPhoto] = useState<string>(initialData?.idPhotoUrl || '');
 
   // Fix: Update handleChange to handle both input and select elements.
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,7 +51,8 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, onClose, initialData })
     const staffData = {
         ...formData,
         role: formData.role as Role,
-        salary: Number(formData.salary)
+        salary: Number(formData.salary),
+        idPhotoUrl: idPhoto || undefined,
     };
     if (initialData) {
       onSubmit({ ...initialData, ...staffData });
@@ -50,12 +66,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, onClose, initialData })
     <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-slate-700">Full Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700">Full Name *</label>
                 <input type="text" id="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full input-field" />
             </div>
-            {/* Fix: Replace text input with a select dropdown for Role to ensure valid data. */}
             <div>
-                <label htmlFor="role" className="block text-sm font-medium text-slate-700">Role</label>
+                <label htmlFor="role" className="block text-sm font-medium text-slate-700">Role *</label>
                 <select id="role" value={formData.role} onChange={handleChange} required className="mt-1 block w-full input-field">
                     {Object.values(Role).map(roleValue => (
                         <option key={roleValue} value={roleValue}>{roleValue}</option>
@@ -63,16 +78,45 @@ const StaffForm: React.FC<StaffFormProps> = ({ onSubmit, onClose, initialData })
                 </select>
             </div>
             <div>
-                <label htmlFor="salary" className="block text-sm font-medium text-slate-700">Salary (Monthly)</label>
+                <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700">Employee ID *</label>
+                <input type="text" id="employeeId" value={formData.employeeId} onChange={handleChange} required className="mt-1 block w-full input-field" />
+            </div>
+            <div>
+                <label htmlFor="salary" className="block text-sm font-medium text-slate-700">Salary (Monthly) *</label>
                 <input type="number" id="salary" value={formData.salary} onChange={handleChange} required className="mt-1 block w-full input-field" />
             </div>
             <div>
-                <label htmlFor="contact" className="block text-sm font-medium text-slate-700">Contact</label>
+                <label htmlFor="contact" className="block text-sm font-medium text-slate-700">Email/Contact *</label>
                 <input type="text" id="contact" value={formData.contact} onChange={handleChange} required className="mt-1 block w-full input-field" />
             </div>
+            <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-700">Phone Number</label>
+                <input type="tel" id="phone" value={formData.phone} onChange={handleChange} className="mt-1 block w-full input-field" placeholder="+66 XX XXX XXXX" />
+            </div>
+            <div>
+                <label htmlFor="thaiId" className="block text-sm font-medium text-slate-700">Thai ID Number</label>
+                <input type="text" id="thaiId" value={formData.thaiId} onChange={handleChange} className="mt-1 block w-full input-field" placeholder="X-XXXX-XXXXX-XX-X" />
+            </div>
+            <div>
+                <label htmlFor="birthday" className="block text-sm font-medium text-slate-700">Birthday</label>
+                <input type="date" id="birthday" value={formData.birthday} onChange={handleChange} className="mt-1 block w-full input-field" />
+            </div>
             <div className="md:col-span-2">
-                <label htmlFor="employeeId" className="block text-sm font-medium text-slate-700">Employee ID</label>
-                <input type="text" id="employeeId" value={formData.employeeId} onChange={handleChange} required className="mt-1 block w-full input-field" />
+                <label htmlFor="address" className="block text-sm font-medium text-slate-700">Address</label>
+                <textarea id="address" value={formData.address} onChange={handleChange} rows={2} className="mt-1 block w-full input-field" placeholder="Full address"></textarea>
+            </div>
+            <div className="md:col-span-2">
+                <label htmlFor="emergencyContact" className="block text-sm font-medium text-slate-700">Emergency Contact</label>
+                <input type="text" id="emergencyContact" value={formData.emergencyContact} onChange={handleChange} className="mt-1 block w-full input-field" placeholder="Name and phone number" />
+            </div>
+            <div className="md:col-span-2">
+                <label htmlFor="idPhoto" className="block text-sm font-medium text-slate-700">ID Photo Upload</label>
+                <input type="file" id="idPhoto" accept="image/*" onChange={handleImageUpload} className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                {idPhoto && (
+                    <div className="mt-2">
+                        <img src={idPhoto} alt="ID Preview" className="h-32 w-auto rounded-md border border-slate-300" />
+                    </div>
+                )}
             </div>
         </div>
          <div className="flex justify-end space-x-2 pt-4">
