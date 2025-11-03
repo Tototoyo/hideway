@@ -209,7 +209,29 @@ export const fetchRooms = async (): Promise<Room[]> => {
     .order('name');
   
   if (error) throw error;
-  return toCamelCase(data) as Room[];
+  
+  // Ensure beds is always an array (handle JSONB storage)
+  const rooms = (data || []).map(room => {
+    let beds = room.beds;
+    
+    // If beds is a string, parse it
+    if (typeof beds === 'string') {
+      try {
+        beds = JSON.parse(beds);
+      } catch (e) {
+        beds = [];
+      }
+    }
+    
+    // If beds is null or undefined, set to empty array
+    if (!Array.isArray(beds)) {
+      beds = [];
+    }
+    
+    return { ...room, beds };
+  });
+  
+  return toCamelCase(rooms) as Room[];
 };
 
 export const addRoom = async (room: Omit<Room, 'id'>): Promise<Room> => {
