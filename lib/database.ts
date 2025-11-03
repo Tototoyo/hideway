@@ -205,10 +205,7 @@ export const deleteUtilityCategory = async (name: string): Promise<void> => {
 export const fetchRooms = async (): Promise<Room[]> => {
   const { data, error } = await supabase
     .from('rooms')
-    .select(`
-      *,
-      beds (*)
-    `)
+    .select('*')
     .order('name');
   
   if (error) throw error;
@@ -216,65 +213,31 @@ export const fetchRooms = async (): Promise<Room[]> => {
 };
 
 export const addRoom = async (room: Omit<Room, 'id'>): Promise<Room> => {
-  const { beds, ...roomData } = room;
-  const { data: newRoom, error: roomError } = await supabase
+  const { data, error } = await supabase
     .from('rooms')
-    .insert([toSnakeCase(roomData)])
+    .insert([toSnakeCase(room)])
     .select()
     .single();
   
-  if (roomError) throw roomError;
-
-  // Add beds
-  if (beds && beds.length > 0) {
-    const bedsToInsert = beds.map(bed => ({
-      ...toSnakeCase(bed),
-      room_id: newRoom.id,
-      id: undefined // Let DB generate
-    }));
-    const { error: bedsError } = await supabase.from('beds').insert(bedsToInsert);
-    if (bedsError) throw bedsError;
-  }
-
-  return fetchRoomById(newRoom.id);
+  if (error) throw error;
+  return toCamelCase(data) as Room;
 };
 
 export const updateRoom = async (room: Room): Promise<Room> => {
-  const { beds, ...roomData } = room;
-  const { error: roomError } = await supabase
+  const { data, error } = await supabase
     .from('rooms')
-    .update(toSnakeCase(roomData))
-    .eq('id', room.id);
+    .update(toSnakeCase(room))
+    .eq('id', room.id)
+    .select()
+    .single();
   
-  if (roomError) throw roomError;
-
-  // Update beds
-  if (beds) {
-    for (const bed of beds) {
-      const { error: bedError } = await supabase
-        .from('beds')
-        .update(toSnakeCase(bed))
-        .eq('id', bed.id);
-      if (bedError) throw bedError;
-    }
-  }
-
-  return fetchRoomById(room.id);
+  if (error) throw error;
+  return toCamelCase(data) as Room;
 };
 
 export const deleteRoom = async (id: string): Promise<void> => {
   const { error } = await supabase.from('rooms').delete().eq('id', id);
   if (error) throw error;
-};
-
-const fetchRoomById = async (id: string): Promise<Room> => {
-  const { data, error } = await supabase
-    .from('rooms')
-    .select(`*, beds (*)`)
-    .eq('id', id)
-    .single();
-  if (error) throw error;
-  return toCamelCase(data) as Room;
 };
 
 // ======================
