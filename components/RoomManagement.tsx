@@ -28,7 +28,8 @@ const RoomForm: React.FC<RoomFormProps> = ({ onSubmit, onClose, initialData }) =
 
   useEffect(() => {
     if (initialData) {
-      // We are editing, so set the condition and notes from the existing room data.
+      // We are editing, so set all fields from the existing room data
+      setName(initialData.name);
       setCondition(initialData.condition);
       setMaintenanceNotes(initialData.maintenanceNotes);
     } else {
@@ -42,10 +43,10 @@ const RoomForm: React.FC<RoomFormProps> = ({ onSubmit, onClose, initialData }) =
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditing) {
-      // If editing, create an updated room object using the initial data
-      // and overwriting only the fields that were edited.
+      // If editing, create an updated room object with all edited fields including name
       const updatedRoomData = {
           ...initialData,
+          name: name,
           condition: condition,
           maintenanceNotes: maintenanceNotes,
       };
@@ -66,18 +67,19 @@ const RoomForm: React.FC<RoomFormProps> = ({ onSubmit, onClose, initialData }) =
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {isEditing ? (
-        // When editing, display the name of the room being updated instead of an input field.
-        <p className="text-sm font-medium text-slate-700">
-          Updating maintenance for: <span className="font-bold">{initialData.name}</span>
-        </p>
-      ) : (
-        // When adding a new room, show the name input field.
-        <div>
-          <label htmlFor="roomName" className="block text-sm font-medium text-slate-700">Room Name</label>
-          <input type="text" id="roomName" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-slate-900" />
-        </div>
-      )}
+      {/* Room name field - now editable in both add and edit mode */}
+      <div>
+        <label htmlFor="roomName" className="block text-sm font-medium text-slate-700">Room Name</label>
+        <input 
+          type="text" 
+          id="roomName" 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
+          required 
+          className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-slate-900" 
+          placeholder={isEditing ? "Edit room name" : "e.g. Bungalow 1"}
+        />
+      </div>
       
       <div>
         <label htmlFor="condition" className="block text-sm font-medium text-slate-700">Condition</label>
@@ -304,6 +306,17 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ rooms, onAddRoom, onUpd
     });
   };
 
+  // Sort rooms naturally (Bungalow 1, 2, 3... 14 instead of 1, 10, 11, 2, 3...)
+  const sortedRooms = useMemo(() => {
+    return [...rooms].sort((a, b) => {
+      // Natural sorting for room names with numbers
+      return a.name.localeCompare(b.name, undefined, { 
+        numeric: true, 
+        sensitivity: 'base' 
+      });
+    });
+  }, [rooms]);
+
 
   return (
     <div>
@@ -328,7 +341,7 @@ const RoomManagement: React.FC<RoomManagementProps> = ({ rooms, onAddRoom, onUpd
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {rooms.map((room) => (
+        {sortedRooms.map((room) => (
           <div key={room.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             <div className="p-4 border-b">
               <div className="flex justify-between items-start">
